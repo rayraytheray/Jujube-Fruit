@@ -1,2 +1,2 @@
 # Jujube Fruit
-Graph neural network model to predict investment amount for startups
+Transformer + MLP model to predict investment amount for Indian startups
