@@ -125,14 +125,13 @@ def clean_amount_column(df):
             return np.nan
     
     df['Amount_Numeric'] = df['Amount(inUSD)'].apply(convert_amount)
-    df['Amount_Numeric'] = df['Amount_Numeric'].replace(0, 0.01)
     df['Amount_Log'] = np.log1p(df['Amount_Numeric'])
     return df
 
 def process_text_data(df):
 
-    df['Combined_Description'] = df['Industry'].fillna('') + ' ' + df['Sub-Vertical'].fillna('') 
-    df['Cleaned_Description'] = ( df['Combined_Description']
+    combined_description = df['Industry'].fillna('') + ' ' + df['Sub-Vertical'].fillna('') 
+    df['Cleaned_Description'] = ( combined_description
         .fillna('')
         .str.lower()
         .str.replace(r'[^\w\s]', ' ', regex=True)
@@ -221,6 +220,8 @@ def main():
     
     df = load_and_combine_data()
   
+    #Fill in 0s for investing amount
+    df['Amount(inUSD)'] = df['Amount(inUSD)'].fillna(0)
     df = clean_amount_column(df)
     
     #drop unused columns

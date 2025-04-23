@@ -1,10 +1,14 @@
 import os
 import numpy as np
 import tensorflow as tf
+import pickle
 
 # Killing optional CPU driver warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+# Load the embeddings
+with open('embeddings/embeddings.pkl', 'rb') as f:
+    embeddings = pickle.load(f)
 
 # Simple MLP regression model with single output to be used on the generated embeddings and other data
 class FundingModel(tf.keras.Model):
