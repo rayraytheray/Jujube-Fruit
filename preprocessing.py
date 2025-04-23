@@ -27,20 +27,38 @@ def load_and_combine_data():
             all_files.extend(csv_files)
     
     print(f"Found {len(all_files)} files")
-    print(all_files)
     
     df_list = []
    
-    for file in all_files:
+    for file in all_files: #for each CSV
         
         try:
-            df = pd.read_csv(file)
+            df = pd.read_csv(file) #conver to dataframe
             filename = os.path.basename(file)
             month, year = filename.replace('.csv', '').split('_')
             df['Year'] = year
             df['Month'] = month
+            
             # Drop the first column (index not needed))
             df = df.drop(df.columns[0], axis=1)
+            
+            #standardize column names
+            for col_name in df.columns:
+                if 'Industry' in col_name:
+                    df.rename(columns={col_name: 'Industry'}, inplace=True)
+                if 'City' in col_name:
+                    df.rename(columns={col_name: 'City'}, inplace=True)
+                if 'Investor' in col_name:
+                    df.rename(columns={col_name: 'Investor'}, inplace=True)
+                    
+                #remove all spaces from all column names
+                cleaned_name = col_name.replace(" ", "")
+                df.rename(columns={col_name: cleaned_name}, inplace=True)
+                
+            #extract investment stage
+            df = process_investment_stage(df)
+                    
+            #add to list of files
             df_list.append(df)
        
         except Exception as e:
@@ -54,6 +72,39 @@ def load_and_combine_data():
     
     else:
         raise ValueError("no valid files found")
+    
+def process_investment_stage(df):
+    # Make a copy to avoid modifying the original
+    df = df.copy()
+    
+    # Check if 'Remarks' column exists
+    if 'Remarks' in df.columns:
+        df['Remarks'] = df['Remarks'].astype(str)
+        # Function to extract Series + next two characters
+        def extract_series(text):     
+            if 'series' in text.lower():
+                # Find the starting position of 'Series'
+                series_index = text.lower().find('series')
+                
+                # Extract Series plus two characters after
+                end_index = min(series_index + len('Series') + 2, len(text))
+                
+                # Extract the substring
+                investment_type = text[series_index:end_index]
+                
+                investment_type = investment_type.strip()
+                
+                return investment_type
+            else:
+                return ''
+        
+        # Apply the function to each item in the 'Remarks' column
+        df['Remarks'] = df['Remarks'].apply(extract_series)
+        
+        # Rename the column to 'InvestmentType'
+        df.rename(columns={'Remarks': 'InvestmentStage'}, inplace=True)
+    
+    return df
 
 def clean_amount_column(df):
     """
@@ -73,14 +124,14 @@ def clean_amount_column(df):
         except ValueError:
             return np.nan
     
-    df['Amount_Numeric'] = df['Amount(in USD)'].apply(convert_amount)
+    df['Amount_Numeric'] = df['Amount(inUSD)'].apply(convert_amount)
     df['Amount_Numeric'] = df['Amount_Numeric'].replace(0, 0.01)
     df['Amount_Log'] = np.log1p(df['Amount_Numeric'])
     return df
 
 def process_text_data(df):
 
-    df['Combined_Description'] = df['Sub-Vertical'].fillna('') + ' ' + df['Industry/Vertical'].fillna('')
+    df['Combined_Description'] = df['Industry'].fillna('') + ' ' + df['Sub-Vertical'].fillna('') 
     df['Cleaned_Description'] = ( df['Combined_Description']
         .fillna('')
         .str.lower()
