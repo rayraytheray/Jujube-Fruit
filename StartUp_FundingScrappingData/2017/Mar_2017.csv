@@ -1,4 +1,4 @@
-Sr. No.,Date(dd/mm/yyyy),Startup Name,Industry/ Vertical,Sub-Vertical,City / Location,Investors’ Name,Invest-mentType,Amount (in USD)
+Sr. No.,Date(dd/mm/yyyy),Startup Name,Industry/ Vertical,Sub-Vertical,City / Location,Investors’ Name,InvestmentType,Amount (in USD)
 1,01/03/2017,Ola,Consumer Internet,App based cab aggregator,Bangalore,SoftBank Group Corp,Private Equity,"330,000,000"
 2,01/03/2017,Belong,Consumer Internet,Online Jon Portal,Bangalore,Sequoia Capital India,Private Equity,"10,000,000"
 3,01/03/2017,Seenit,Consumer Internet,AI based Fashion Search Portal,Kolkata,"Calcutta Angels Network (CAN), Augment Ventures",Seed Funding,N/A

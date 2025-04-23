@@ -27,6 +27,7 @@ def load_and_combine_data():
             all_files.extend(csv_files)
     
     print(f"Found {len(all_files)} files")
+    print(all_files)
     
     df_list = []
    
@@ -38,6 +39,8 @@ def load_and_combine_data():
             month, year = filename.replace('.csv', '').split('_')
             df['Year'] = year
             df['Month'] = month
+            # Drop the first column (index not needed))
+            df = df.drop(df.columns[0], axis=1)
             df_list.append(df)
        
         except Exception as e:
@@ -168,6 +171,10 @@ def main():
     df = load_and_combine_data()
   
     df = clean_amount_column(df)
+    
+    #drop unused columns
+    df = df.drop('Date(dd/mm/yyyy)', axis=1)
+    df = df.drop('Date', axis=1)
    
     df, padded_sequences, tokenizer = process_text_data(df)
   
