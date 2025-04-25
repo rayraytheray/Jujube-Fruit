@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import glob
 import tensorflow as tf
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler, MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
 
 TextVectorization = tf.keras.layers.TextVectorization
@@ -15,9 +15,7 @@ EMBEDDING_DIM = 128
 RANDOM_SEED = 42
 
 def load_and_combine_data():
-    """
-    load and combine CSV files and turn into a dataframe
-    """
+
     all_files = []
     
     for year in range(2015, 2022):
@@ -30,19 +28,18 @@ def load_and_combine_data():
     
     df_list = []
    
-    for file in all_files: #for each CSV
+    for file in all_files:
         
         try:
-            df = pd.read_csv(file) #conver to dataframe
+            df = pd.read_csv(file) 
             filename = os.path.basename(file)
             month, year = filename.replace('.csv', '').split('_')
             df['Year'] = year
             df['Month'] = month
             
-            # Drop the first column (index not needed))
+ 
             df = df.drop(df.columns[0], axis=1)
             
-            #standardize column names
             for col_name in df.columns:
                 if 'Industry' in col_name:
                     df.rename(columns={col_name: 'Industry'}, inplace=True)
@@ -55,10 +52,10 @@ def load_and_combine_data():
                 cleaned_name = col_name.replace(" ", "")
                 df.rename(columns={col_name: cleaned_name}, inplace=True)
                 
-            #extract investment stage
+       
             df = process_investment_stage(df)
                     
-            #add to list of files
+   
             df_list.append(df)
        
         except Exception as e:
@@ -72,24 +69,24 @@ def load_and_combine_data():
     
     else:
         raise ValueError("no valid files found")
-    
+
+
 def process_investment_stage(df):
-    # Make a copy to avoid modifying the original
+   
     df = df.copy()
     
-    # Check if 'Remarks' column exists
     if 'Remarks' in df.columns:
         df['Remarks'] = df['Remarks'].astype(str)
-        # Function to extract Series + next two characters
+  
         def extract_series(text):     
             if 'series' in text.lower():
-                # Find the starting position of 'Series'
+                
                 series_index = text.lower().find('series')
                 
-                # Extract Series plus two characters after
+        
                 end_index = min(series_index + len('Series') + 2, len(text))
                 
-                # Extract the substring
+             
                 investment_type = text[series_index:end_index]
                 
                 investment_type = investment_type.strip()
@@ -98,18 +95,15 @@ def process_investment_stage(df):
             else:
                 return ''
         
-        # Apply the function to each item in the 'Remarks' column
         df['Remarks'] = df['Remarks'].apply(extract_series)
         
-        # Rename the column to 'InvestmentType'
+
         df.rename(columns={'Remarks': 'InvestmentStage'}, inplace=True)
     
     return df
 
+
 def clean_amount_column(df):
-    """
-    Clean and convert the funding amount column
-    """
     df = df.copy()
     
     def convert_amount(amount):
@@ -125,13 +119,15 @@ def clean_amount_column(df):
             return np.nan
     
     df['Amount_Numeric'] = df['Amount(inUSD)'].apply(convert_amount)
+    df['Amount_Numeric'] = df['Amount_Numeric'].replace(0, 0.01)
     df['Amount_Log'] = np.log1p(df['Amount_Numeric'])
     return df
 
+
 def process_text_data(df):
 
-    combined_description = df['Industry'].fillna('') + ' ' + df['Sub-Vertical'].fillna('') 
-    df['Cleaned_Description'] = ( combined_description
+    df['Combined_Description'] = df['Industry'].fillna('') + ' ' + df['Sub-Vertical'].fillna('') 
+    df['Cleaned_Description'] = ( df['Combined_Description']
         .fillna('')
         .str.lower()
         .str.replace(r'[^\w\s]', ' ', regex=True)
@@ -151,28 +147,41 @@ def process_text_data(df):
 
     return df, padded_sequences, vectorizer
 
+
 def encode_categorical_features(df):
-    """
-    Encode categorical features
-    """
-    categorical_cols = ['City', 'Industry/Vertical', 'Investment Stage']
+
+    categorical_cols = ['City', 'InvestmentType', 'InvestmentStage', 'Year', 'Month']
     encoders = {}
     df = df.copy()
    
-    for col in categorical_cols: 
+    for col in categorical_cols:
         if col in df.columns:
             df[col] = df[col].fillna('Unknown')
             le = LabelEncoder()
-            df[col + '_Encoded'] = le.fit_transform(df[col])
+            df[col + '_Encoded'] = le.fit_transform(df[col].astype(str))
             encoders[col] = le
+
+    if 'Investor' in df.columns:
+        df['Investor'] = df['Investor'].fillna('')
+        investor_lists = df['Investor'].apply(lambda x: [i.strip() for i in x.split(',') if i.strip()])
+        
+        all_investors = sorted({inv for inv_list in investor_lists for inv in inv_list})
+        investor_le = LabelEncoder()
+        investor_le.fit(all_investors)
+        encoders['Investor'] = investor_le
+
+        df['Investor_Encoded'] = investor_lists.apply(
+            lambda invs: investor_le.transform(invs).tolist() if invs else []
+        )
+
     return df, encoders
 
+
+#This function is largely irrelevant
 def prepare_data_for_model(df, padded_sequences):
-    """
-    Prepare final dataset for model training
-    """
+
     numerical_features = ['Year']
-    categorical_features = [col for col in df.columns if col.endswith('_Encoded')]
+    categorical_features = [col for col in df.columns if col.endswith('_Encoded') and col != 'Investor_Encoded']
     feature_columns = numerical_features + categorical_features
     features = df[feature_columns].values
     target = df['Amount_Log'].values
@@ -190,10 +199,9 @@ def prepare_data_for_model(df, padded_sequences):
     X_feat_test = scaler.transform(X_feat_test)
     return (X_text_train, X_feat_train, y_train), (X_text_test, X_feat_test, y_test), scaler
 
+
+
 def save_processed_data(train_data, test_data, tokenizer, scaler, encoders):
-    """
-    Save processed data and associated objects for later use
-    """
     os.makedirs('processed_data', exist_ok=True)
     np.save('processed_data/X_text_train.npy', train_data[0])
     np.save('processed_data/X_feat_train.npy', train_data[1])
@@ -215,16 +223,14 @@ def save_processed_data(train_data, test_data, tokenizer, scaler, encoders):
     
     print("Processed data and metadata saved successfully")
 
+
 def main():
     print("Starting data preprocessing...")
     
     df = load_and_combine_data()
   
-    #Fill in 0s for investing amount
-    df['Amount(inUSD)'] = df['Amount(inUSD)'].fillna(0)
     df = clean_amount_column(df)
     
-    #drop unused columns
     df = df.drop('Date(dd/mm/yyyy)', axis=1)
     df = df.drop('Date', axis=1)
    
@@ -236,9 +242,11 @@ def main():
    
     save_processed_data(train_data, test_data, tokenizer, scaler, encoders)
  
-    df.to_csv('processed_data/processed_dataframe.csv', index=False)
+    final_cols = ['StartupName', 'City_Encoded', 'Investor_Encoded', 'InvestmentType_Encoded', 'Amount_Log', 'Year_Encoded', 'Month_Encoded', 'Cleaned_Description']
+    df_final = df[final_cols]
+    df_final.to_csv('processed_data/processed_dataframe.csv', index=False)
   
     print("Data preprocessing completed successfully")
-
+    
 if __name__ == "__main__":
     main()

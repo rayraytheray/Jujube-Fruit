@@ -1,14 +1,10 @@
 import os
 import numpy as np
 import tensorflow as tf
-import pickle
 
 # Killing optional CPU driver warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-# Load the embeddings
-with open('embeddings/embeddings.pkl', 'rb') as f:
-    embeddings = pickle.load(f)
 
 # Simple MLP regression model with single output to be used on the generated embeddings and other data
 class FundingModel(tf.keras.Model):
@@ -25,23 +21,16 @@ class FundingModel(tf.keras.Model):
         #single output within range 0-1 (normalized) so we dont't get huge values
 
 
-    def call(self, transformer_embeddings, additional_data):
-        x = tf.concat([transformer_embeddings, additional_data], axis=1) # not really sure on the concat logic yet since not sure of shapes
-
-        #the shapes need to be same over axis 1 :
-
-        #transformer_embeddings: (batch_size, embedding_dim)
-        #additional_data:        (batch_size, additional_dim)
-
-        #needs to be discussed further
-
+    def call(self, inputs):
+        transformer_embeddings, additional_data = inputs
+        x = tf.concat([transformer_embeddings, additional_data], axis=1)
         x = self.dense_1(x)
         x = self.dense_2(x)
         x = self.dense_3(x)
         x = self.dense_4(x)
         output = self.out_layer(x)
-
         return output
+
     
     #should not need custom train/test functions -- should be okay to compile and fit when using
     #additionally need to be able to normalize the output

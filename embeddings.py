@@ -55,3 +55,8 @@ def process_csv():
 # Usage example
 if __name__ == "__main__":
     process_csv()
+    
+# # Load embeddings later for training
+# with open('file_location.pkl', 'rb') as f:
+#     data = pickle.load(f)
+#     embeddings = data['embeddings']
