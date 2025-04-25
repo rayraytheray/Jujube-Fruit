@@ -176,39 +176,8 @@ def encode_categorical_features(df):
 
     return df, encoders
 
-
-#This function is largely irrelevant
-def prepare_data_for_model(df, padded_sequences):
-
-    numerical_features = ['Year']
-    categorical_features = [col for col in df.columns if col.endswith('_Encoded') and col != 'Investor_Encoded']
-    feature_columns = numerical_features + categorical_features
-    features = df[feature_columns].values
-    target = df['Amount_Log'].values
-    valid_indices = ~np.isnan(target)
-    features = features[valid_indices]
-    padded_sequences = padded_sequences[valid_indices]
-    target = target[valid_indices]
-
-    X_text_train, X_text_test, X_feat_train, X_feat_test, y_train, y_test = train_test_split(
-        padded_sequences, features, target, test_size=0.2, random_state=RANDOM_SEED
-    )
-   
-    scaler = StandardScaler()
-    X_feat_train = scaler.fit_transform(X_feat_train)
-    X_feat_test = scaler.transform(X_feat_test)
-    return (X_text_train, X_feat_train, y_train), (X_text_test, X_feat_test, y_test), scaler
-
-
-
-def save_processed_data(train_data, test_data, tokenizer, scaler, encoders):
+def save_processed_data( tokenizer,  encoders): #train_data, test_data,scaler,
     os.makedirs('processed_data', exist_ok=True)
-    np.save('processed_data/X_text_train.npy', train_data[0])
-    np.save('processed_data/X_feat_train.npy', train_data[1])
-    np.save('processed_data/y_train.npy', train_data[2])
-    np.save('processed_data/X_text_test.npy', test_data[0])
-    np.save('processed_data/X_feat_test.npy', test_data[1])
-    np.save('processed_data/y_test.npy', test_data[2])
     
     metadata = {
         'max_vocab_size': MAX_VOCAB_SIZE,
@@ -218,7 +187,6 @@ def save_processed_data(train_data, test_data, tokenizer, scaler, encoders):
 
     pd.to_pickle(metadata, 'processed_data/metadata.pkl')
     pd.to_pickle(tokenizer, 'processed_data/tokenizer.pkl')
-    pd.to_pickle(scaler, 'processed_data/scaler.pkl')
     pd.to_pickle(encoders, 'processed_data/encoders.pkl')
     
     print("Processed data and metadata saved successfully")
@@ -237,10 +205,8 @@ def main():
     df, padded_sequences, tokenizer = process_text_data(df)
   
     df, encoders = encode_categorical_features(df)
-  
-    train_data, test_data, scaler = prepare_data_for_model(df, padded_sequences)
-   
-    save_processed_data(train_data, test_data, tokenizer, scaler, encoders)
+
+    save_processed_data( tokenizer, encoders) 
  
     final_cols = ['StartupName', 'City_Encoded', 'Investor_Encoded', 'InvestmentType_Encoded', 'Amount_Log', 'Year_Encoded', 'Month_Encoded', 'Cleaned_Description']
     df_final = df[final_cols]
