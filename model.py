@@ -11,7 +11,7 @@ class FundingModel(tf.keras.Model):
 
     def __init__(self, embedding_dim, additional_dim):
         super(FundingModel, self).__init__()
-        self.optimizer = tf.keras.optimizers.Adam()
+        #self.optimizer = tf.keras.optimizers.Adam()
 
         self.dense_1 = tf.keras.layers.Dense(256, activation='relu')
         self.dense_2 = tf.keras.layers.Dense(128, activation='relu')
