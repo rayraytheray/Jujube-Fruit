@@ -73,7 +73,7 @@ def visualize_regression_dollar(y_test, y_pred):
     y_pred = y_pred.flatten()
     errors = y_test - y_pred
     plt.scatter(y_pred, y_test, alpha=1, c=errors, cmap='coolwarm')
-    plt.plot([0.35,10**7*3.5],[0.35,10**8])
+    plt.plot([0.35,10**8],[0.35,10**8])
     plt.title('MLP Prediction vs. True Value') 
     plt.xlabel('Predicted Value (USD)') 
     plt.ylabel('Actual Value (USD)') 
