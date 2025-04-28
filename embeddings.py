@@ -10,7 +10,7 @@ OUTPUT_DIRECTORY = 'embeddings'
 INPUT_FILE = 'processed_data/processed_dataframe.csv'
 
 class EmbeddingGenerator:
-    def __init__(self, model_url='https://tfhub.dev/google/universal-sentence-encoder/4', batch_size=32):
+    def __init__(self, model_url='https://tfhub.dev/google/universal-sentence-encoder-large/4', batch_size=32):
         """Initialize with Universal Sentence Encoder from TF Hub"""
         self.model = hub.load(model_url)
         self.batch_size = batch_size
@@ -21,7 +21,8 @@ class EmbeddingGenerator:
         
         for i in tqdm(range(0, len(descriptions), self.batch_size)):
             batch = descriptions[i:i + self.batch_size]
-            batch_embeddings = self.model(batch).numpy()
+            result = self.model(batch)
+            batch_embeddings = result['outputs']
             embeddings.append(batch_embeddings)
         
         return np.vstack(embeddings)
