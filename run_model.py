@@ -91,7 +91,7 @@ def main():
 
     selected_columns = [
         'City_Encoded', 'Investor_Encoded', 'InvestmentType_Encoded', 'InvestmentStage_Encoded',
-        'Year_Encoded', 'Month_Encoded', 'Descriptions_Encoded', 'Amount_Log'
+        'Descriptions_Encoded', 'Amount_Log'
     ]
     df_filtered = df[selected_columns].dropna()
 
@@ -105,7 +105,7 @@ def main():
 
 
     X_embedding = np.stack(df_filtered['Descriptions_Encoded'].to_numpy())
-    X_additional = df_filtered[['City_Encoded', 'InvestmentType_Encoded', 'InvestmentStage_Encoded', 'Year_Encoded', 'Month_Encoded']].to_numpy()
+    X_additional = df_filtered[['City_Encoded', 'InvestmentType_Encoded', 'InvestmentStage_Encoded']].to_numpy()
     X_additional = np.concatenate([X_additional, investor_array], axis=1)
     y = df_filtered['Amount_Log'].to_numpy()
 
