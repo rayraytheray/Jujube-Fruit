@@ -17,9 +17,8 @@ class FundingModel(tf.keras.Model):
         self.dense_2 = tf.keras.layers.Dense(128, activation='relu')
         self.dense_3 = tf.keras.layers.Dense(64, activation='relu')
         self.dense_4 = tf.keras.layers.Dense(32, activation='relu')
-        self.out_layer = tf.keras.layers.Dense(1, activation='sigmoid') 
         #single output within range 0-1 (normalized) so we dont't get huge values
-
+        self.out_layer = tf.keras.layers.Dense(1, activation='sigmoid') 
 
     def call(self, inputs):
         transformer_embeddings, additional_data = inputs
