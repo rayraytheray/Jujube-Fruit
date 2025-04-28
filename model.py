@@ -9,7 +9,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # Simple MLP regression model with single output to be used on the generated embeddings and other data
 class FundingModel(tf.keras.Model):
 
-    def __init__(self, embedding_dim, additional_dim):
+    def __init__(self):
         super(FundingModel, self).__init__()
         
         self.dense_1 = tf.keras.layers.Dense(256, activation='relu')
@@ -20,8 +20,8 @@ class FundingModel(tf.keras.Model):
         self.out_layer = tf.keras.layers.Dense(1, activation='sigmoid') 
 
     def call(self, inputs):
-        transformer_embeddings, additional_data = inputs
-        x = tf.concat([transformer_embeddings, additional_data], axis=1)
+        additional_data = inputs
+        x = additional_data
         x = self.dense_1(x)
         x = self.dense_2(x)
         x = self.dense_3(x)

@@ -73,7 +73,7 @@ def visualize_regression_dollar(y_test, y_pred):
     y_pred = y_pred.flatten()
     errors = y_test - y_pred
     plt.scatter(y_pred, y_test, alpha=1, c=errors, cmap='coolwarm')
-    plt.plot([0.35,10**7*3.5],[0.35,10**8])
+    plt.plot([0.35,10**8],[0.35,10**8])
     plt.title('MLP Prediction vs. True Value') 
     plt.xlabel('Predicted Value (USD)') 
     plt.ylabel('Actual Value (USD)') 
@@ -91,7 +91,7 @@ def main():
 
     selected_columns = [
         'City_Encoded', 'Investor_Encoded', 'InvestmentType_Encoded', 'InvestmentStage_Encoded',
-        'Year_Encoded', 'Month_Encoded', 'Descriptions_Encoded', 'Amount_Log'
+        'Year_Encoded', 'Month_Encoded', 'Amount_Log'
     ]
     df_filtered = df[selected_columns].dropna()
 
@@ -104,26 +104,27 @@ def main():
     investor_array = np.stack(investor_multihot.to_numpy())
 
 
-    X_embedding = np.stack(df_filtered['Descriptions_Encoded'].to_numpy())
-    X_additional = df_filtered[['City_Encoded', 'InvestmentType_Encoded', 'InvestmentStage_Encoded', 'Year_Encoded', 'Month_Encoded']].to_numpy()
+    # X_embedding = np.stack(df_filtered['Descriptions_Encoded'].to_numpy())
+    X_additional = df_filtered[['City_Encoded', 'InvestmentType_Encoded', 
+                                'InvestmentStage_Encoded', 'Year_Encoded', 'Month_Encoded']].to_numpy()
     X_additional = np.concatenate([X_additional, investor_array], axis=1)
     y = df_filtered['Amount_Log'].to_numpy()
 
-    X_embed_train, X_embed_test, X_add_train, X_add_test, y_train, y_test = train_test_split(
-        X_embedding, X_additional, y, test_size=0.2, random_state=42
+    X_add_train, X_add_test, y_train, y_test = train_test_split(
+        X_additional, y, test_size=0.2, random_state=42
     )
 
-    embedding_dim = X_embed_train.shape[1]
+    # embedding_dim = X_embed_train.shape[1]
     additional_dim = X_add_train.shape[1]
 
-    print(f"Training model with embedding_dim={embedding_dim}, additional_dim={additional_dim}")
+    # print(f"Training model with embedding_dim={embedding_dim}, additional_dim={additional_dim}")
 
-    model = FundingModel(embedding_dim, additional_dim)
+    model = FundingModel()
     model.compile(optimizer=tf.keras.optimizers.Adam(), loss='mse', metrics=['mae'])
 
 
     history = model.fit(
-        x=[X_embed_train, X_add_train],
+        x=X_add_train,
         y=y_train,
         batch_size=32,
         epochs=10,
@@ -136,10 +137,10 @@ def main():
     train_mae = history.history['mae'] # list for mae during training
     val_mae = history.history['val_mae'] #list for validation mae
 
-    loss, mae = model.evaluate([X_embed_test, X_add_test], y_test)
+    loss, mae = model.evaluate(X_add_test, y_test)
     print(f"Test Loss: {loss:.4f}, Test MAE: {mae:.4f}")
 
-    preds = model.predict([X_embed_test[:20], X_add_test[:20]])
+    preds = model.predict(X_add_test[:20])
     print("Predictions (log scale):", preds.flatten())
     print("Ground Truth:", y_test[:5])
 
