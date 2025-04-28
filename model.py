@@ -11,8 +11,7 @@ class FundingModel(tf.keras.Model):
 
     def __init__(self, embedding_dim, additional_dim):
         super(FundingModel, self).__init__()
-        #self.optimizer = tf.keras.optimizers.Adam()
-
+        
         self.dense_1 = tf.keras.layers.Dense(256, activation='relu')
         self.dense_2 = tf.keras.layers.Dense(128, activation='relu')
         self.dense_3 = tf.keras.layers.Dense(64, activation='relu')
@@ -29,7 +28,6 @@ class FundingModel(tf.keras.Model):
         x = self.dense_4(x)
         output = self.out_layer(x)
         return output
-
     
     #should not need custom train/test functions -- should be okay to compile and fit when using
     #additionally need to be able to normalize the output

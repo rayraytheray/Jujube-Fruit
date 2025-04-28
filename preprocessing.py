@@ -137,17 +137,7 @@ def process_text_data(df):
         .str.strip()
     )
 
-    vectorizer = TextVectorization(
-        max_tokens=MAX_VOCAB_SIZE,
-        output_mode='int',
-        output_sequence_length=MAX_SEQUENCE_LENGTH
-    )
-    vectorizer.adapt(df['Cleaned_Description'].values)
-
-    sequences = vectorizer(df['Cleaned_Description'].values)
-    padded_sequences = sequences.numpy()
-
-    return df, padded_sequences, vectorizer
+    return df
 
 
 def encode_categorical_features(df):
@@ -178,7 +168,7 @@ def encode_categorical_features(df):
 
     return df, encoders
 
-def save_processed_data( tokenizer,  encoders): #train_data, test_data,scaler,
+def save_processed_data( encoders): #train_data, test_data,scaler,
     os.makedirs('processed_data', exist_ok=True)
     
     metadata = {
@@ -188,7 +178,6 @@ def save_processed_data( tokenizer,  encoders): #train_data, test_data,scaler,
     }
 
     pd.to_pickle(metadata, 'processed_data/metadata.pkl')
-    pd.to_pickle(tokenizer, 'processed_data/tokenizer.pkl')
     pd.to_pickle(encoders, 'processed_data/encoders.pkl')
     
     print("Processed data and metadata saved successfully")
@@ -204,13 +193,13 @@ def main():
     df = df.drop('Date(dd/mm/yyyy)', axis=1)
     df = df.drop('Date', axis=1)
    
-    df, padded_sequences, tokenizer = process_text_data(df)
+    df = process_text_data(df)
   
     df, encoders = encode_categorical_features(df)
 
-    save_processed_data( tokenizer, encoders) 
+    save_processed_data(encoders) 
  
-    final_cols = ['StartupName', 'City_Encoded', 'Investor_Encoded', 'InvestmentType_Encoded', 'Amount_Log', 'Year_Encoded', 'Month_Encoded', 'Cleaned_Description']
+    final_cols = ['StartupName', 'City_Encoded', 'Investor_Encoded', 'InvestmentType_Encoded', 'InvestmentStage_Encoded', 'Amount_Log', 'Year_Encoded', 'Month_Encoded', 'Cleaned_Description']
     df_final = df[final_cols]
     df_final.to_csv('processed_data/processed_dataframe.csv', index=False)
   
