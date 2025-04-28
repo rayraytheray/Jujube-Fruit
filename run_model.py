@@ -5,6 +5,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from model import FundingModel
 from sklearn.model_selection import train_test_split
+import joblib
+
 
 data_dir = 'processed_data'
 model_dir = 'models'
@@ -54,7 +56,7 @@ def visualize_mae(training_mae, validation_mae, num_epochs=10):
 
     plt.show()
 
-def visualize_regression(y_test, y_pred, bins=10):
+def visualize_regression(y_test, y_pred):
     y_test = y_test.flatten()
     y_pred = y_pred.flatten()
     errors = y_test - y_pred
@@ -63,6 +65,18 @@ def visualize_regression(y_test, y_pred, bins=10):
     plt.title('MLP Prediction vs. True Value') 
     plt.xlabel('Predicted Value (normalized)') 
     plt.ylabel('Actual Value (normalized)') 
+    plt.show()
+    
+    
+def visualize_regression_dollar(y_test, y_pred):
+    y_test = y_test.flatten()
+    y_pred = y_pred.flatten()
+    errors = y_test - y_pred
+    plt.scatter(y_pred, y_test, alpha=1, c=errors, cmap='coolwarm')
+    plt.plot([0.35,10**7*3.5],[0.35,10**8])
+    plt.title('MLP Prediction vs. True Value') 
+    plt.xlabel('Predicted Value (USD)') 
+    plt.ylabel('Actual Value (USD)') 
     plt.show()
 
 
@@ -136,6 +150,22 @@ def main():
     os.makedirs(model_dir, exist_ok=True)
     model.save(os.path.join(model_dir, 'funding_model.keras'))
     print(f" Model saved to {model_dir}/funding_model.keras")
+    
+    visualize_regression_dollar(un_normalize(y_test[:20]), un_normalize(preds)) # to see how examples compare to what they should be 
+    
+def un_normalize(values):
+    scaler = joblib.load('scaler.pkl')
+    
+    if values.ndim == 1:
+        values = values.reshape(-1, 1)
+        
+    values = scaler.inverse_transform(values)
+    values = np.expm1(values)
+    
+    if values.shape[1] == 1:
+        values = values.flatten()
+        
+    return values
 
 if __name__ == "__main__":
     main()
