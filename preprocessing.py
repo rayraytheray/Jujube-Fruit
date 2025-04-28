@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import glob
 import tensorflow as tf
-from sklearn.preprocessing import LabelEncoder, StandardScaler, MultiLabelBinarizer
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
 
 TextVectorization = tf.keras.layers.TextVectorization
@@ -105,6 +105,7 @@ def process_investment_stage(df):
 
 def clean_amount_column(df):
     df = df.copy()
+    scaler = MinMaxScaler()
     
     def convert_amount(amount):
         
@@ -121,6 +122,7 @@ def clean_amount_column(df):
     df['Amount_Numeric'] = df['Amount(inUSD)'].apply(convert_amount)
     df['Amount_Numeric'] = df['Amount_Numeric'].replace(0, 0.01)
     df['Amount_Log'] = np.log1p(df['Amount_Numeric'])
+    df['Amount_Log'] = scaler.fit_transform(df[['Amount_Log']]) #could return scaler as well for inverse_transform (if needed)
     return df
 
 
