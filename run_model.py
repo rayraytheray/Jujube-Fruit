@@ -47,9 +47,9 @@ def visualize_mae(training_mae, validation_mae, num_epochs=10):
     plt.plot(training_mae, label='Training MAE')
     plt.plot(validation_mae, label='Validation MAE')
 
-    plt.title('loss over epochs')
+    plt.title('MAE over epochs')
     plt.xlabel('Epochs')
-    plt.ylabel('Loss')
+    plt.ylabel('MAE')
     plt.legend()
 
     plt.show()
@@ -58,11 +58,11 @@ def visualize_regression(y_test, y_pred, bins=10):
     y_test = y_test.flatten()
     y_pred = y_pred.flatten()
     errors = y_test - y_pred
-    plt.scatter(y_test, y_pred, alpha=1, c=errors, cmap='coolwarm')
-    plt.plot([0.35,0.6],[0.35,0.6])
-    plt.title('ScatterPlot of Model Performance') #needs to change later
-    plt.xlabel('x') # needs change
-    plt.ylabel('y') # needs change
+    plt.scatter(y_pred, y_test, alpha=1, c=errors, cmap='coolwarm')
+    plt.plot([0.35,0.7],[0.35,0.7])
+    plt.title('MLP Prediction vs. True Value') 
+    plt.xlabel('Predicted Value (normalized)') 
+    plt.ylabel('Actual Value (normalized)') 
     plt.show()
 
 
@@ -125,13 +125,13 @@ def main():
     loss, mae = model.evaluate([X_embed_test, X_add_test], y_test)
     print(f"Test Loss: {loss:.4f}, Test MAE: {mae:.4f}")
 
-    preds = model.predict([X_embed_test[:5], X_add_test[:5]])
+    preds = model.predict([X_embed_test[:20], X_add_test[:20]])
     print("Predictions (log scale):", preds.flatten())
     print("Ground Truth:", y_test[:5])
 
     visualize_loss(training_loss=train_loss, validation_loss=val_loss)
     visualize_mae(training_mae=train_mae, validation_mae=val_mae)
-    visualize_regression(y_test[:5], preds) # to see how 5 examples compare to what they should be 
+    visualize_regression(y_test[:20], preds) # to see how examples compare to what they should be 
 
     os.makedirs(model_dir, exist_ok=True)
     model.save(os.path.join(model_dir, 'funding_model.keras'))
